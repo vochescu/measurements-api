@@ -1,0 +1,39 @@
+{
+  "configs": [
+    "global.xml",
+    "measurements-api.xml"
+  ],
+  "secureProperties": [],
+  "redeploymentEnabled": true,
+  "name": "com.mycompany:measurements-api:1.0.0-SNAPSHOT",
+  "minMuleVersion": "4.3.0",
+  "requiredProduct": "MULE_EE",
+  "classLoaderModelLoaderDescriptor": {
+    "id": "mule",
+    "attributes": {
+      "exportedPackages": [],
+      "exportedResources": [
+        "log4j2.xml",
+        "global.xml",
+        "measurements-api.xml",
+        "api/traits/Securable.raml",
+        "api/traits/Acceptable.raml",
+        "api/datatypes/CustomError.raml",
+        "api/datatypes/RemoteMeasurement.raml",
+        "api/resourceTypes/Collection.raml",
+        "api/resourceTypes/CollectionItem.raml",
+        "api/examples/RemoteMeasurementPostExample.raml",
+        "api/examples/errors/error401.raml",
+        "api/examples/errors/error400.raml",
+        "api/examples/errors/error503.raml",
+        "api/examples/errors/error500.raml",
+        "api/examples/errors/error404.raml",
+        "api/measurements-api.raml"
+      ]
+    }
+  },
+  "bundleDescriptorLoader": {
+    "id": "mule",
+    "attributes": {}
+  }
+}

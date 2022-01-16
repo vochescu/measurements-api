@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+    <http:listener-config name="measurements-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="measurements-api-config" api="measurements-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	
+	<os:object-store name="measurements_data_os" doc:name="Object store" doc:id="d35f6d6d-6d75-42e3-ac50-aeec2d50c7d6" />
+	
+	<os:object-store name="measurements_by_patient_os" doc:name="Object store" doc:id="b8d48bec-8b23-4880-93de-464b58067a28" />
+	<flow name="measurements-api-main">
+        <http:listener config-ref="measurements-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="measurements-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+	<flow name="measurements-api-console">
+        <http:listener config-ref="measurements-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="measurements-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="put:\measurements\(patient_id):measurements-api-config">
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" doc:name="set vars">
+                  <ee:variables>
+                <ee:set-variable variableName="patient_id"><![CDATA[attributes.uriParams.'patient_id']]></ee:set-variable>
+				<ee:set-variable variableName="dataToBeAdded" ><![CDATA[%dw 2.0
+output application/json
+---
+ {
+ "mapValue": {
+  "fields": {
+    "time": {
+      "timestampValue": payload.date 
+    },
+    "value": {
+      "stringValue": payload.figure
+        }
+      }
+    }
+  }]]></ee:set-variable>
+				<ee:set-variable variableName="typeOfMeasurement" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"type": payload.'type'
+}
+]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<http:request method="GET" doc:name="get the current values from Firebase" doc:id="e721bf0c-b979-4966-acd5-689c6d9507f7" config-ref="Firebase_HTTP_Request" path="#['v1/projects/healthconnect-a15f6/databases/(default)/documents/patients/' ++ vars.patient_id]" target="initialPatientData">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"key" : "AIzaSyBbEFH58H6h5v-cDxcFZ_eJLNPRR8zbkhl"
+}]]]></http:query-params>
+		</http:request>
+		
+		<flow-ref doc:name="putChanges Reference" doc:id="0fcb7454-59b0-4c58-96d9-e45dbc5b0839" name="putChanges" />
+    </flow>
+	<flow name="put:\measurements:application\json:measurements-api-config">
+		<logger level="INFO" doc:name="Logger" doc:id="35e99902-eba4-468f-8347-60ea1824c409" message="#[payload]"/>
+		<ee:transform doc:name="transform payload into Java object" doc:id="38308365-1e78-4740-b0e0-35ab15a09eef" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<os:store doc:name="store measurement" doc:id="6484255a-e351-4726-931e-71a01596fa36" key="#[payload.date]" objectStore="measurements_data_os">
+		</os:store>
+		<set-payload value='#[{"message":"OK"}]' doc:name="Set Payload" doc:id="d3d3887d-e7bf-4e93-a329-72a5bf1196b0" />
+    </flow>
+    <flow name="measurementsFlow" doc:id="6459afeb-7873-4c6f-99db-b8a927690788" maxConcurrency="1">
+		<scheduler doc:name="Scheduler" doc:id="c0cb993f-db46-4516-aeb3-87666792f03e" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="${frequency}" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve-all doc:name="retrieve all measurements" doc:id="9ac309f7-4269-40ee-9d43-fcc855b5feb4" objectStore="measurements_data_os"/>
+		<choice doc:name="Choice" doc:id="1e2112eb-5d00-41a6-a005-c502bf97f17b" >
+			<when expression="#[payload != null]">
+				<ee:transform doc:name="break values into an array" doc:id="07f436e2-9630-45e1-94e0-13e25029ae02">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json 
+---
+payload pluck($)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<foreach doc:name="For Each" doc:id="a71fa526-7152-4548-af50-7d5a467cc67a" collection="#[payload]">
+			<flow-ref doc:name="forEachMeasurement Reference" doc:id="cdb5de72-0f94-4a3a-968f-0d6828bc1b0a" name="forEachMeasurement" />
+		</foreach>
+			</when>
+		</choice>
+		<os:clear doc:name="clear measurements store" doc:id="878b769f-a02f-4726-a382-728656b01917" objectStore="measurements_data_os"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6af95f72-732a-4a97-b826-e4a02e3c6109" />
+		</error-handler>
+	</flow>
+	<flow name="forEachMeasurement" doc:id="03dc5841-733e-4e51-a206-f4289ad814bf" >
+		<http:request method="GET" doc:name="get the current values from Firebase" doc:id="b35450e4-a9b4-4b18-a89f-369830c72407" config-ref="Firebase_HTTP_Request" path="#['v1/projects/healthconnect-a15f6/databases/(default)/documents/patients']" target="initialPatientData">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"key" : "AIzaSyBbEFH58H6h5v-cDxcFZ_eJLNPRR8zbkhl"
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="set vars" doc:id="9488f4d5-9286-411f-b6ac-92cc75eda51d">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="patient_id"><![CDATA[%dw 2.0
+output application/json
+var patient = vars.initialPatientData.documents filter ((v,i) -> v.fields.firstName.stringValue == payload.firstName  and v.fields.lastName.stringValue == payload.lastName) default {}
+---
+(patient.name[0] default "" splitBy("/"))[6] default ""
+]]></ee:set-variable>
+				<ee:set-variable variableName="typeOfMeasurement"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"type": payload.'type'
+}
+]]></ee:set-variable>
+				<ee:set-variable variableName="dataToBeAdded"><![CDATA[%dw 2.0
+output application/json
+---
+ {
+ "mapValue": {
+  "fields": {
+    "time": {
+      "timestampValue": payload.date 
+    },
+    "value": {
+      "stringValue": payload.figure
+        }
+      }
+    }
+  }]]></ee:set-variable>
+				<ee:set-variable variableName="initialPatientData"><![CDATA[%dw 2.0
+output application/json
+---
+(vars.initialPatientData.documents filter ((v,i) -> v.fields.firstName.stringValue == payload.firstName  and v.fields.lastName.stringValue == payload.lastName))[0] default {}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="putChanges Reference" doc:id="fb9245a6-311f-4965-a9a2-7b4b95fe0ef0" name="putChanges" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c8241d1d-1c59-477c-99b8-a48bcb3bdb5f" />
+		</error-handler>
+	</flow>
+	<flow name="putChanges" doc:id="f935785e-86f0-4804-88d2-9efb58bf5858" >
+		
+		<choice doc:name="Choice" doc:id="191f1b88-4f24-438d-8cfe-50ddac95b99c" >
+			<when expression='#[vars.patient_id != ""]'>
+				<choice doc:name="Choice" doc:id="db92d253-2e41-46cd-9f5e-ebdd88bd8c60">
+			<when expression="#[vars.typeOfMeasurement.'type'==&quot;heartRates&quot;]">
+				<ee:transform doc:name="add data to the current state" doc:id="0c967278-b798-4706-98e6-9b69799159af">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "fields": {
+    "lastName": vars.initialPatientData.fields.lastName,
+    "allergies":  vars.initialPatientData.fields.allergies,
+    "medications":vars.initialPatientData.fields.medications,
+    "steps": vars.initialPatientData.fields.steps,
+    "doctorUid": vars.initialPatientData.fields.doctorUid,
+    "conditions": vars.initialPatientData.fields.conditions,
+    "heartRates": {
+      "arrayValue": {
+        "values": vars.initialPatientData.fields.heartRates.arrayValue.values default [] ++ [vars.dataToBeAdded]
+      }
+    },
+    "sex": vars.initialPatientData.fields.sex,
+    "burnedCalories": vars.initialPatientData.fields.burnedCalories,
+    "email": vars.initialPatientData.fields.email,
+    "address":vars.initialPatientData.fields.address,
+    "firstName": vars.initialPatientData.fields.firstName,
+    "dateOfBirth": vars.initialPatientData.fields.dateOfBirth,
+    "phone":  vars.initialPatientData.fields.phone,
+    "cnp": vars.initialPatientData.fields.cnp,
+    "occupation":  vars.initialPatientData.fields.occupation,
+    "lastVisit":  vars.initialPatientData.fields.lastVisit,
+ }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[vars.typeOfMeasurement.'type'==&quot;burnedCalories&quot;]">
+				<ee:transform doc:name="add data to the current state" doc:id="570c6242-eed7-41de-a438-e686bf99101d">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "fields": {
+    "lastName": vars.initialPatientData.fields.lastName,
+    "allergies":  vars.initialPatientData.fields.allergies,
+    "medications":vars.initialPatientData.fields.medications,
+    "steps": vars.initialPatientData.fields.steps,
+    "doctorUid": vars.initialPatientData.fields.doctorUid,
+    "conditions": vars.initialPatientData.fields.conditions,
+    "heartRates": vars.initialPatientData.fields.heartRates,
+    "sex": vars.initialPatientData.fields.sex,
+    "burnedCalories": {
+      "arrayValue": {
+        "values": vars.initialPatientData.fields.burnedCalories.arrayValue.values default [] ++ [vars.dataToBeAdded]
+      }
+    },
+    "email": vars.initialPatientData.fields.email,
+    "address":vars.initialPatientData.fields.address,
+    "firstName": vars.initialPatientData.fields.firstName,
+    "dateOfBirth": vars.initialPatientData.fields.dateOfBirth,
+    "phone":  vars.initialPatientData.fields.phone,
+    "cnp": vars.initialPatientData.fields.cnp,
+    "occupation":  vars.initialPatientData.fields.occupation,
+    "lastVisit":  vars.initialPatientData.fields.lastVisit,
+ }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[vars.typeOfMeasurement.'type'==&quot;steps&quot;]">
+				<ee:transform doc:name="add data to the current state" doc:id="858474e4-c024-4cbe-9b98-d31ac63c8f7a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json skipNullOn="everywhere"
+---
+{
+  "fields": {
+    "lastName": vars.initialPatientData.fields.lastName,
+    "allergies":  vars.initialPatientData.fields.allergies,
+    "medications":vars.initialPatientData.fields.medications,
+    "steps": {
+      "arrayValue": {
+        "values": vars.initialPatientData.fields.steps.arrayValue.values default [] ++ [vars.dataToBeAdded]
+      }
+    },
+    "doctorUid": vars.initialPatientData.fields.doctorUid,
+    "conditions": vars.initialPatientData.fields.conditions,
+    "heartRates": vars.initialPatientData.fields.heartRates,
+    "sex": vars.initialPatientData.fields.sex,
+    "burnedCalories": vars.initialPatientData.fields.burnedCalories,
+    "email": vars.initialPatientData.fields.email,
+    "address":vars.initialPatientData.fields.address,
+    "firstName": vars.initialPatientData.fields.firstName,
+    "dateOfBirth": vars.initialPatientData.fields.dateOfBirth,
+    "phone":  vars.initialPatientData.fields.phone,
+    "cnp": vars.initialPatientData.fields.cnp,
+    "occupation":  vars.initialPatientData.fields.occupation,
+    "lastVisit":  vars.initialPatientData.fields.lastVisit,
+ }
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="3e881f64-6977-4dfa-9464-100ecfd7b07b">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"Nothing to compute"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+				<http:request method="PATCH" doc:name="PATCH to Firebase" doc:id="e8866c35-ec95-4eba-bf69-94c86e737da4" path="#['v1/projects/healthconnect-a15f6/databases/(default)/documents/patients/' ++ vars.patient_id]" config-ref="Firebase_HTTP_Request">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"key" : "AIzaSyBbEFH58H6h5v-cDxcFZ_eJLNPRR8zbkhl"
+}]]]></http:query-params>
+		</http:request>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="1bdd0bc2-18fa-41f5-9419-f8810e91f745" message="#[payload]" />
+				<ee:transform doc:name="Transform Message" doc:id="7840a9d2-a7c8-4331-8872-9fa3114c9fc8" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"code": "INVALID_PATIENT",
+	"message": "The patient was not found"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="0054c870-0881-4401-8cc2-084d0238e6b5" message="#[payload]"/>
+			</otherwise>
+		</choice>
+		
+	</flow>
+</mule>

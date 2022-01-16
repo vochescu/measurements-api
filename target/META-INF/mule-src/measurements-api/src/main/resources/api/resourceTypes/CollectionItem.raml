@@ -1,0 +1,160 @@
+#%RAML 1.0 ResourceType
+get?:
+  responses:
+    200:
+      body:
+        application/json:
+          type: <<item>>
+          examples:
+            output: <<example>>
+    400:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error400.raml
+    401:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error401.raml    
+    404:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error404.raml
+    500:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error500.raml
+    503:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error503.raml
+put?:
+  description: This API is used to modify or create <<resourcePathName>>
+  body:
+    application/json:
+      type: <<item>>
+    
+  responses:
+    202:
+      body:
+        application/json:
+          example:
+            message: Remote Measurement has been updated.
+    400:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error400.raml
+    401:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error401.raml    
+    404:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error404.raml
+    500:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error500.raml
+    503:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error503.raml
+post?:
+  description: This API is used to modify or create <<resourcePathName>>
+  body:
+    application/json:
+      type: <<item>>
+    
+  responses:
+    202:
+      body:
+        application/json:
+          example:
+            message: Remote Measurement has been updated.
+    400:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error400.raml
+    401:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error401.raml    
+    404:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error404.raml
+    500:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error500.raml
+    503:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error503.raml
+delete?:
+  responses:
+    200:
+      body: 
+        application/json:
+          example: 
+            message: Deleted successfully the <<resourcePathName>>                
+    400:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error400.raml
+    401:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error401.raml    
+    404:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error404.raml
+    500:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error500.raml
+    503:
+      body:
+        application/json:
+          type: <<errorItem>>
+          examples: 
+            output: !include ../examples/errors/error503.raml

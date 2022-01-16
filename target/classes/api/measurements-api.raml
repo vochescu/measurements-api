@@ -1,0 +1,29 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/1fa2f91a-a63d-43ad-b2c5-5f394494e9a3/ # 
+title: measurements-api
+types:
+  remoteMeasurement: !include datatypes/RemoteMeasurement.raml
+  customError: !include datatypes/CustomError.raml
+
+traits:
+  acceptable: !include traits/Acceptable.raml
+
+resourceTypes:
+  collection: !include resourceTypes/Collection.raml
+  collection-item: !include resourceTypes/CollectionItem.raml
+  
+  
+/measurements:
+  displayName: Remote Measurement by Patient ID 
+  is:
+    - acceptable
+  type:
+    collection: 
+      item: remoteMeasurement
+      errorItem: customError
+      example: !include examples/RemoteMeasurementPostExample.raml
+  put:
+    displayName: Create Remote Measurement for a Patient by Name
+  /{patient_id}:
+    put:
+      displayName: Update or create Remote Measurement for a Patient ID
